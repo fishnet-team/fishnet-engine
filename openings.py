@@ -33,7 +33,6 @@ while True:
       openings[hc][hn] = [0, 0, 0]
     openings[hc][hn][curr_res] += 1
     curr_res *= -1
-   
   ind += 1
 
 pickle.dump(openings, open("openings-stats.dump", "wb"))
