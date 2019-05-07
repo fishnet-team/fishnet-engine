@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="css/chessboard-0.3.0.css">
+    <script src="js/chessboard-0.3.0.js"></script>
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <script src="js/chess.js"></script>
+</head>
+<body>
+    <div id="board" style="width: 400px"></div>
+    <script type="text/javascript">
+        var board;
+        var game = new Chess();
+
+        /*
+        $.get(URL + "get_ingredients", function (data) {
+            console.log(data);
+            localStorage.ingredients = data;
+
+            for (i = 0; i < PAGE_SIZE; i++) {
+                add_ingred(i);
+            }
+            console.log(typeof (localStorage.ingredients));
+        });
+         */
+
+        // do not pick up pieces if the game is over
+        // only pick up pieces for White
+        var onDragStart = function(source, piece, position, orientation) {
+          if (game.in_checkmate() === true || game.in_draw() === true ||
+            piece.search(/^b/) !== -1) {
+            return false;
+          }
+        };
+
+        var URL = 'http://127.0.0.1:5000/'
+
+        var makeFishnetMove = function () {
+            var possibleMoves = game.moves();
+            if (possibleMoves.length === 0) return;
+
+            $.ajax({
+              url: URL + 'get_move',
+              type: "POST",
+              data: JSON.stringify({'fen': game.fen()}),
+              contentType: "application/json; charset=utf-8",
+              dataType: "text",
+              success: function(data) {
+                  //alert(data)
+                  console.log(data);
+                  game.move(data, {sloppy: true});
+                  board.position(game.fen());
+              },
+              error: function() {
+                alert('error');
+              },
+            });
+
+            /*$.post(URL + 'get_move', {, function (data) {
+
+            }, "json");*/
+        }
+
+        var makeRandomMove = function() {
+          var possibleMoves = game.moves();
+
+          // game over
+          if (possibleMoves.length === 0) return;
+
+          var randomIndex = Math.floor(Math.random() * possibleMoves.length);
+          game.move(possibleMoves[randomIndex]);
+          board.position(game.fen());
+        };
+
+        var onDrop = function(source, target) {
+          // see if the move is legal
+          var move = game.move({
+            from: source,
+            to: target,
+            promotion: 'q' // NOTE: always promote to a queen for example simplicity
+          });
+
+          // illegal move
+          if (move === null) return 'snapback';
+
+          // make random legal move for black
+          window.setTimeout(makeFishnetMove, 250);
+        };
+
+        // update the board position after the piece snap
+        // for castling, en passant, pawn promotion
+        var onSnapEnd = function() {
+          board.position(game.fen());
+        };
+
+        var cfg = {
+          draggable: true,
+          position: 'start',
+          onDragStart: onDragStart,
+          onDrop: onDrop,
+          onSnapEnd: onSnapEnd
+        };
+        board = ChessBoard('board', cfg);
+    </script>
+</body>
+</html>

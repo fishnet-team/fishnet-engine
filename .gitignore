@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# Chess game archives
+*.pgn
+
 # Distribution / packaging
 .Python
 build/
