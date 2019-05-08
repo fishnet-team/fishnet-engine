@@ -10,21 +10,13 @@
 </head>
 <body>
     <div id="board" style="width: 400px"></div>
+    <input type="button" id="startBtn" value="Reset">
+    <input type="button" id="backBtn" value="Back">
+    <input type="button" id="flipOrientationBtn" value="Flip orientation" />
+    <input type="button" id="show-pgnBtn" value="PGN">
     <script type="text/javascript">
         var board;
         var game = new Chess();
-
-        /*
-        $.get(URL + "get_ingredients", function (data) {
-            console.log(data);
-            localStorage.ingredients = data;
-
-            for (i = 0; i < PAGE_SIZE; i++) {
-                add_ingred(i);
-            }
-            console.log(typeof (localStorage.ingredients));
-        });
-         */
 
         // do not pick up pieces if the game is over
         // only pick up pieces for White
@@ -57,10 +49,6 @@
                 alert('error');
               },
             });
-
-            /*$.post(URL + 'get_move', {, function (data) {
-
-            }, "json");*/
         }
 
         var makeRandomMove = function() {
@@ -100,9 +88,30 @@
           position: 'start',
           onDragStart: onDragStart,
           onDrop: onDrop,
-          onSnapEnd: onSnapEnd
+          onSnapEnd: onSnapEnd,
+          //orientation: 'black',
         };
         board = ChessBoard('board', cfg);
+
+        $('#startBtn').on('click', function() {
+          game.reset();
+          $.get(URL + 'reset', function(data){  });
+          board.start();
+        });
+
+        $('#backBtn').on('click', function() {
+          game.undo();
+          game.undo();
+          $.get(URL + 'back', function(data){  });
+          $.get(URL + 'back', function(data){  });
+          board.position(game.fen());
+        });
+
+        $('#flipOrientationBtn').on('click', board.flip);
+        $('#show-pgnBtn').on('click', function() {
+          console.log(game.pgn({ max_width: 5, newline_char: '\n'}));
+          console.log('----\n')
+        })
     </script>
 </body>
 </html>

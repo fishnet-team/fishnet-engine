@@ -34,10 +34,7 @@ class Fishnet:
 
 	def score_function(self, board):
 		if board.is_game_over():
-			#print(board.fen())
-			#print(board.is_game_over())
 			res = board.result()
-			#print('res:', res)
 			if res == '1-0':
 				return self.INF
 			elif res == '0-1':
@@ -45,10 +42,8 @@ class Fishnet:
 			else:
 				return 0
 		balance = 0
-		#print(board.fen())
 		for el in board.fen().split()[0]:
 			if el.lower() in self.figures:
-				#print(el, self.cost[el.lower()], 1 - 2 * (el != el.lower()))
 				balance += self.cost[el.lower()] * (1 - 2 * (el != el.lower()))
 		return balance
 
