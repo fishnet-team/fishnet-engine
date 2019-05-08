@@ -12,6 +12,8 @@
     <div id="board" style="width: 400px"></div>
     <input type="button" id="startBtn" value="Reset">
     <input type="button" id="backBtn" value="Back">
+    <input type="button" id="flipOrientationBtn" value="Flip orientation" />
+    <input type="button" id="show-pgnBtn" value="PGN">
     <script type="text/javascript">
         var board;
         var game = new Chess();
@@ -86,7 +88,8 @@
           position: 'start',
           onDragStart: onDragStart,
           onDrop: onDrop,
-          onSnapEnd: onSnapEnd
+          onSnapEnd: onSnapEnd,
+          //orientation: 'black',
         };
         board = ChessBoard('board', cfg);
 
@@ -103,6 +106,12 @@
           $.get(URL + 'back', function(data){  });
           board.position(game.fen());
         });
+
+        $('#flipOrientationBtn').on('click', board.flip);
+        $('#show-pgnBtn').on('click', function() {
+          console.log(game.pgn({ max_width: 5, newline_char: '\n'}));
+          console.log('----\n')
+        })
     </script>
 </body>
 </html>
