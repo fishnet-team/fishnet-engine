@@ -42,16 +42,17 @@ def css_chessboard(data):
 @app.route('/get_move', methods=['POST'])
 def get_move():
 	#print(request.args)
-	print(request.data)
-	print(request.data.decode('ascii'))
+	#print(request.data)
+	#print(request.data.decode('ascii'))
 	s = request.data.decode('ascii')
-	print(s, type(s))
+	#print(s, type(s))
 	fen = json.loads(s)
-	print(fen)
+	#print(fen)
 	board = chess.Board(fen['fen'])
 	move = engine.get_move(board)
+	print('move', move)
 	board.push(move)
 	move = str(move)
 	#move = move[:2] + '-' + move[2:]
-	print('move', move)
+	
 	return move

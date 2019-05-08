@@ -11,57 +11,62 @@ import chess
 import numpy as np
 import pandas as pd
 
-'''
-
-dataset_x = []
-dataset_y = []
-
-for game_idx in itertools.count():
-    game = pgn.read_game(dataset_file)
-
-    if game is None:
-        break
-
-    board = game.board()
-
-    for i, move in enumerate(game.mainline_moves()):
-        x = chess_to_np(board)
-
-    x1, y1, x2, y2 = parse_move(move)
-
-    if i % 2 == 1:
-        x = np.flip(x, axis=[0, 1])
-
-        x1 = board_w - x1 - 1
-        y1 = board_h - y1 - 1
-        x2 = board_w - x2 - 1
-        y2 = board_h - y2 - 1
-
-    y = np.zeros((board_h, board_w, board_h, board_w))
-    y[x1, y1, x2, y2] = 1
-
-    dataset_x.append(x)
-    dataset_y.append(y)
-
-'''
-
 class Fishnet:
-	def __init__(self, datafolder):
-		#self.config = exec(open(datafolder + 'config.txt'))
-		#self.net
+	def __init__(self, datafolder, MX_BRANCHING=10, MX_FULLAN_DEPTH=2):
 		self.net = load_model(datafolder + 'model.hdf5')
 		self.net._make_predict_function()
 		print(self.net.summary())
-		self.opening = OpeningMaster(datafolder + 'opening-stats.dump')
-
+		
+		self.opening = OpeningMaster(datafolder + 'varied.bin')
+		
+		self.MX_BRANCHING = MX_BRANCHING
+		self.MX_FULLAN_DEPTH = MX_FULLAN_DEPTH
 		self.board_w = 8
 		self.board_h = 8
+		self.INF = 1791791791
+		self.cost = {'p': 1, 'k': self.INF, 'q': 9, 'r': 5, 'b': 3, 'n': 3}
 
 		self.figures = ["r", "n", "b", "q", "k", "p"]
 		self.vec_by_figure = {}
 
 		for i, fig in enumerate(self.figures):
 		    self.vec_by_figure[fig] = to_categorical(i, num_classes=len(self.figures))
+
+	def score_function(self, board):
+		if board.is_game_over():
+			#print(board.fen())
+			#print(board.is_game_over())
+			res = board.result()
+			#print('res:', res)
+			if res == '1-0':
+				return self.INF
+			elif res == '0-1':
+				return -self.INF
+			else:
+				return 0
+		balance = 0
+		#print(board.fen())
+		for el in board.fen().split()[0]:
+			if el.lower() in self.figures:
+				#print(el, self.cost[el.lower()], 1 - 2 * (el != el.lower()))
+				balance += self.cost[el.lower()] * (1 - 2 * (el != el.lower()))
+		return balance
+
+	def guaranteed_balance(self, board, depth_left):
+		if depth_left == 0:
+			return self.score_function(board)
+		best = None
+		for move in board.legal_moves:
+			temp = board.copy()
+			temp.push(move)
+			balance = self.guaranteed_balance(temp, depth_left - 1)
+			if best is None:
+				best = balance
+			elif board.turn and balance > best:
+				best = balance
+			elif not board.turn and balance < best:
+				best = balance
+		return best
 
 	def chess_to_np(self, board):
 		ret = []
@@ -100,26 +105,32 @@ class Fishnet:
 	def neural_play(self, board):
 		print('NEURAL MAGIC')
 		data = self.chess_to_np(board)
-		#print(data)
-		#print(data.shape)
 		res = list(self.net.predict(data)[0])
 		correct_moves = []
 		for i in range(len(res)):
 			move = self.moveid2move_cords(i)
-			#print(i, move)
 			if not board.turn:
 				move = self.reverse_move(move)
 			move = self.movec2move(move)
-			#print(move)#, chess.Move.from_uci(move), list(board.legal_moves))
 			if chess.Move.from_uci(move) in board.legal_moves:
 				correct_moves.append((res[i], chess.Move.from_uci(move)))
 		correct_moves.sort(reverse=True)
-		#print(correct_moves)
-		return correct_moves[0][1]
+		correct_moves = correct_moves[:self.MX_BRANCHING]
+		scored_moves = []
+		for el in correct_moves:
+			temp = board.copy()
+			temp.push(el[1])
+			scored_moves.append((self.guaranteed_balance(temp, self.MX_FULLAN_DEPTH), el[0], el[1]))
+		scored_moves.sort(reverse=True)
+		return scored_moves[0][-1]
 
 	def get_move(self, board):
-		if self.opening.has_info(board):
-			return self.opening.get_move(board)
-		return self.neural_play(board)
-		moves = list(board.legal_moves)
-		return moves[random.randint(0, len(moves) - 1)]
+		move = self.opening.get_move(board)
+		if move is not None:
+			move = move.move()
+		else:
+			move = self.neural_play(board)
+		temp = board.copy()
+		temp.push(move)
+		print('move:', move, 'score:', self.score_function(temp))
+		return move
