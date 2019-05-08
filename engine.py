@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 
 class Fishnet:
-	def __init__(self, datafolder, MX_BRANCHING=10, MX_FULLAN_DEPTH=2):
+	def __init__(self, datafolder, MX_BRANCHING=10, MX_GAN_DEPTH=3):
 		self.net = load_model(datafolder + 'model.hdf5')
 		self.net._make_predict_function()
 		print(self.net.summary())
@@ -20,7 +20,7 @@ class Fishnet:
 		self.opening = OpeningMaster(datafolder + 'varied.bin')
 		
 		self.MX_BRANCHING = MX_BRANCHING
-		self.MX_FULLAN_DEPTH = MX_FULLAN_DEPTH
+		self.MX_GAN_DEPTH = MX_GAN_DEPTH
 		self.board_w = 8
 		self.board_h = 8
 		self.INF = 1791791791
@@ -47,6 +47,7 @@ class Fishnet:
 				balance += self.cost[el.lower()] * (1 - 2 * (el != el.lower()))
 		return balance
 
+	
 	def guaranteed_balance(self, board, depth_left):
 		if depth_left == 0:
 			return self.score_function(board)
@@ -99,8 +100,7 @@ class Fishnet:
 	def reverse_move(self, move):
 		return (7 - move[i] for i in range(len(move)))
 
-	def neural_play(self, board):
-		print('NEURAL MAGIC')
+	def get_neural_move_rating(self, board):
 		data = self.chess_to_np(board)
 		res = list(self.net.predict(data)[0])
 		correct_moves = []
@@ -112,12 +112,36 @@ class Fishnet:
 			if chess.Move.from_uci(move) in board.legal_moves:
 				correct_moves.append((res[i], chess.Move.from_uci(move)))
 		correct_moves.sort(reverse=True)
-		correct_moves = correct_moves[:self.MX_BRANCHING]
+		return correct_moves
+
+	def guided_search(self, board, depth_left=4):
+		if depth_left == 0:
+			return self.score_function(board)
+		best = None
+
+		for move in self.get_neural_move_rating(board)[:self.MX_BRANCHING]:
+			temp = board.copy()
+			temp.push(move[1])
+			balance = self.guaranteed_balance(temp, depth_left - 1)
+			if balance is None:
+				continue
+			if best is None:
+				best = balance
+			elif board.turn and balance > best:
+				best = balance
+			elif not board.turn and balance < best:
+				best = balance
+		return best
+
+	def neural_play(self, board):
+		print('NEURAL MAGIC')
+		correct_moves = self.get_neural_move_rating(board)[:self.MX_BRANCHING]
 		scored_moves = []
 		for el in correct_moves:
 			temp = board.copy()
 			temp.push(el[1])
-			scored_moves.append((self.guaranteed_balance(temp, self.MX_FULLAN_DEPTH), el[0], el[1]))
+			scored_moves.append((self.guided_search(temp, self.MX_GAN_DEPTH), 
+								el[0], el[1]))
 		scored_moves.sort(reverse=True)
 		return scored_moves[0][-1]
 
