@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 
 class Fishnet:
-	def __init__(self, datafolder, MX_BRANCHING=10, MX_GAN_DEPTH=2):
+	def __init__(self, datafolder, MX_BRANCHING=10, MX_GAN_DEPTH=3):
 		self.net = load_model(datafolder + 'model.hdf5')
 		self.net._make_predict_function()
 		print(self.net.summary())
