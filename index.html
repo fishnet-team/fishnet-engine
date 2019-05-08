@@ -10,21 +10,10 @@
 </head>
 <body>
     <div id="board" style="width: 400px"></div>
+    <input type="button" id="startBtn" value="Reset">
     <script type="text/javascript">
         var board;
         var game = new Chess();
-
-        /*
-        $.get(URL + "get_ingredients", function (data) {
-            console.log(data);
-            localStorage.ingredients = data;
-
-            for (i = 0; i < PAGE_SIZE; i++) {
-                add_ingred(i);
-            }
-            console.log(typeof (localStorage.ingredients));
-        });
-         */
 
         // do not pick up pieces if the game is over
         // only pick up pieces for White
@@ -57,10 +46,6 @@
                 alert('error');
               },
             });
-
-            /*$.post(URL + 'get_move', {, function (data) {
-
-            }, "json");*/
         }
 
         var makeRandomMove = function() {
@@ -103,6 +88,12 @@
           onSnapEnd: onSnapEnd
         };
         board = ChessBoard('board', cfg);
+
+        $('#startBtn').on('click', function() {
+          game.reset();
+          $.get(URL + 'reset', function(data){  });
+          board.start();
+        });
     </script>
 </body>
 </html>
