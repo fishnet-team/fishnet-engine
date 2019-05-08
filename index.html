@@ -11,6 +11,7 @@
 <body>
     <div id="board" style="width: 400px"></div>
     <input type="button" id="startBtn" value="Reset">
+    <input type="button" id="backBtn" value="Back">
     <script type="text/javascript">
         var board;
         var game = new Chess();
@@ -93,6 +94,14 @@
           game.reset();
           $.get(URL + 'reset', function(data){  });
           board.start();
+        });
+
+        $('#backBtn').on('click', function() {
+          game.undo();
+          game.undo();
+          $.get(URL + 'back', function(data){  });
+          $.get(URL + 'back', function(data){  });
+          board.position(game.fen());
         });
     </script>
 </body>

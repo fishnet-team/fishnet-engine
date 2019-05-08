@@ -16,6 +16,12 @@ def reset_board():
 	print('RESET')
 	return 'for the emperor'
 
+@app.route('/back')
+def revert_move():
+	board.pop()
+	print('REVERT')
+	return 'int hack 2019'
+
 @app.route('/')
 def index():
 	return send_file('index.html')
