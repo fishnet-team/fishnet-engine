@@ -47,8 +47,6 @@ for game_idx in itertools.count():
 
 class Fishnet:
 	def __init__(self, datafolder):
-		#self.config = exec(open(datafolder + 'config.txt'))
-		#self.net
 		self.net = load_model(datafolder + 'model.hdf5')
 		self.net._make_predict_function()
 		print(self.net.summary())
@@ -123,9 +121,7 @@ class Fishnet:
 
 	def get_move(self, board):
 		move = self.opening.get_move(board)
-		print('line126', move, type(move))
 		if move is not None:
 			move = move.move()
-			print('l128', move, type(move))
 			return move
 		return self.neural_play(board)
