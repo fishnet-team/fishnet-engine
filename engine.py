@@ -131,7 +131,8 @@ class Fishnet:
 				best = balance
 			elif not board.turn and balance < best:
 				best = balance
-		return best
+		if best is None:
+			return self.score_function(board)
 
 	def neural_play(self, board):
 		print('NEURAL MAGIC')
