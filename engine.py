@@ -55,6 +55,8 @@ class Fishnet:
 			temp = board.copy()
 			temp.push(move)
 			balance = self.guaranteed_balance(temp, depth_left - 1)
+			if balance is None:
+				continue
 			if best is None:
 				best = balance
 			elif board.turn and balance > best:
