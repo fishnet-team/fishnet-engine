@@ -52,7 +52,7 @@ class Fishnet:
 		self.net = load_model(datafolder + 'model.hdf5')
 		self.net._make_predict_function()
 		print(self.net.summary())
-		self.opening = OpeningMaster(datafolder + 'opening-stats.dump')
+		self.opening = OpeningMaster(datafolder + 'varied.bin')
 
 		self.board_w = 8
 		self.board_h = 8
@@ -62,6 +62,10 @@ class Fishnet:
 
 		for i, fig in enumerate(self.figures):
 		    self.vec_by_figure[fig] = to_categorical(i, num_classes=len(self.figures))
+
+	#def score_function(self, board):
+	#	# always for white
+	#	if board.
 
 	def chess_to_np(self, board):
 		ret = []
@@ -118,8 +122,10 @@ class Fishnet:
 		return correct_moves[0][1]
 
 	def get_move(self, board):
-		if self.opening.has_info(board):
-			return self.opening.get_move(board)
+		move = self.opening.get_move(board)
+		print('line126', move, type(move))
+		if move is not None:
+			move = move.move()
+			print('l128', move, type(move))
+			return move
 		return self.neural_play(board)
-		moves = list(board.legal_moves)
-		return moves[random.randint(0, len(moves) - 1)]
